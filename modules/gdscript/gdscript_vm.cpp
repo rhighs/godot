@@ -184,6 +184,7 @@ void (*type_init_function_table[])(Variant *) = {
 	&VariantInitializer<PackedVector2Array>::init, // PACKED_VECTOR2_ARRAY.
 	&VariantInitializer<PackedVector3Array>::init, // PACKED_VECTOR3_ARRAY.
 	&VariantInitializer<PackedColorArray>::init, // PACKED_COLOR_ARRAY.
+	&VariantInitializer<PackedDictArray>::init, // PACKED_DICT_ARRAY.
 };
 
 #if defined(__GNUC__)
@@ -331,6 +332,7 @@ void (*type_init_function_table[])(Variant *) = {
 		&&OPCODE_TYPE_ADJUST_PACKED_VECTOR2_ARRAY,     \
 		&&OPCODE_TYPE_ADJUST_PACKED_VECTOR3_ARRAY,     \
 		&&OPCODE_TYPE_ADJUST_PACKED_COLOR_ARRAY,       \
+		&&OPCODE_TYPE_ADJUST_PACKED_DICT_ARRAY,        \
 		&&OPCODE_ASSERT,                               \
 		&&OPCODE_BREAKPOINT,                           \
 		&&OPCODE_LINE,                                 \
@@ -3399,6 +3401,7 @@ Variant GDScriptFunction::call(GDScriptInstance *p_instance, const Variant **p_a
 			OPCODE_TYPE_ADJUST(PACKED_VECTOR2_ARRAY, PackedVector2Array);
 			OPCODE_TYPE_ADJUST(PACKED_VECTOR3_ARRAY, PackedVector3Array);
 			OPCODE_TYPE_ADJUST(PACKED_COLOR_ARRAY, PackedColorArray);
+			OPCODE_TYPE_ADJUST(PACKED_DICT_ARRAY, PackedDictArray);
 
 			OPCODE(OPCODE_ASSERT) {
 				CHECK_SPACE(3);

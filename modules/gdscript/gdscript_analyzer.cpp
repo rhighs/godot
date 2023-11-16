@@ -4290,6 +4290,7 @@ void GDScriptAnalyzer::reduce_subscript(GDScriptParser::SubscriptNode *p_subscri
 							// Expect int or real as index.
 							case Variant::PACKED_BYTE_ARRAY:
 							case Variant::PACKED_COLOR_ARRAY:
+							case Variant::PACKED_DICT_ARRAY:
 							case Variant::PACKED_FLOAT32_ARRAY:
 							case Variant::PACKED_FLOAT64_ARRAY:
 							case Variant::PACKED_INT32_ARRAY:
@@ -4394,6 +4395,10 @@ void GDScriptAnalyzer::reduce_subscript(GDScriptParser::SubscriptNode *p_subscri
 					case Variant::VECTOR4:
 					case Variant::QUATERNION:
 						result_type.builtin_type = Variant::FLOAT;
+						break;
+                    // Return Dictionary.
+					case Variant::PACKED_DICT_ARRAY:
+						result_type.builtin_type = Variant::DICTIONARY;
 						break;
 					// Return Color.
 					case Variant::PACKED_COLOR_ARRAY:

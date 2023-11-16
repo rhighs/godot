@@ -167,6 +167,9 @@ String Variant::get_type_name(Variant::Type p_type) {
 		case PACKED_COLOR_ARRAY: {
 			return "PackedColorArray";
 		}
+		case PACKED_DICT_ARRAY: {
+			return "PacketDictArray";
+		}
 		default: {
 		}
 	}
@@ -404,6 +407,7 @@ bool Variant::can_convert(Variant::Type p_type_from, Variant::Type p_type_to) {
 				PACKED_COLOR_ARRAY,
 				PACKED_VECTOR2_ARRAY,
 				PACKED_VECTOR3_ARRAY,
+				PACKED_DICT_ARRAY,
 				NIL
 			};
 
@@ -472,6 +476,15 @@ bool Variant::can_convert(Variant::Type p_type_from, Variant::Type p_type_to) {
 
 		} break;
 		case PACKED_COLOR_ARRAY: {
+			static const Type valid[] = {
+				ARRAY,
+				NIL
+			};
+
+			valid_types = valid;
+
+		} break;
+		case PACKED_DICT_ARRAY: {
 			static const Type valid[] = {
 				ARRAY,
 				NIL
@@ -814,6 +827,15 @@ bool Variant::can_convert_strict(Variant::Type p_type_from, Variant::Type p_type
 			valid_types = valid;
 
 		} break;
+		case PACKED_DICT_ARRAY: {
+			static const Type valid[] = {
+				ARRAY,
+				NIL
+			};
+
+			valid_types = valid;
+
+		} break;
 		default: {
 		}
 	}
@@ -979,6 +1001,9 @@ bool Variant::is_zero() const {
 		}
 		case PACKED_COLOR_ARRAY: {
 			return PackedArrayRef<Color>::get_array(_data.packed_array).size() == 0;
+		}
+		case PACKED_DICT_ARRAY: {
+			return PackedArrayRef<Dictionary>::get_array(_data.packed_array).size() == 0;
 		}
 		default: {
 		}
@@ -1236,6 +1261,12 @@ void Variant::reference(const Variant &p_variant) {
 				_data.packed_array = PackedArrayRef<Color>::create();
 			}
 		} break;
+		case PACKED_DICT_ARRAY: {
+			_data.packed_array = static_cast<PackedArrayRef<Dictionary> *>(p_variant._data.packed_array)->reference();
+			if (!_data.packed_array) {
+				_data.packed_array = PackedArrayRef<Color>::create();
+			}
+		} break;
 		default: {
 		}
 	}
@@ -1285,7 +1316,6 @@ void Variant::zero() {
 		case QUATERNION:
 			*reinterpret_cast<Quaternion *>(this->_data._mem) = Quaternion();
 			break;
-
 		case COLOR:
 			*reinterpret_cast<Color *>(this->_data._mem) = Color();
 			break;
@@ -1408,6 +1438,9 @@ void Variant::_clear_internal() {
 			PackedArrayRefBase::destroy(_data.packed_array);
 		} break;
 		case PACKED_COLOR_ARRAY: {
+			PackedArrayRefBase::destroy(_data.packed_array);
+		} break;
+		case PACKED_DICT_ARRAY: {
 			PackedArrayRefBase::destroy(_data.packed_array);
 		} break;
 		default: {
@@ -1803,6 +1836,9 @@ String Variant::stringify(int recursion_count) const {
 		}
 		case PACKED_STRING_ARRAY: {
 			return stringify_vector(operator Vector<String>(), recursion_count);
+		}
+		case PACKED_DICT_ARRAY: {
+			return stringify_vector(operator Vector<Dictionary>(), recursion_count);
 		}
 		case PACKED_BYTE_ARRAY: {
 			return stringify_vector(operator Vector<uint8_t>(), recursion_count);
@@ -2233,6 +2269,9 @@ inline DA _convert_array_from_variant(const Variant &p_variant) {
 		case Variant::PACKED_COLOR_ARRAY: {
 			return _convert_array<DA, Vector<Color>>(p_variant.operator Vector<Color>());
 		}
+		case Variant::PACKED_DICT_ARRAY: {
+			return _convert_array<DA, Vector<Dictionary>>(p_variant.operator Vector<Dictionary>());
+		}
 		default: {
 			return DA();
 		}
@@ -2316,6 +2355,14 @@ Variant::operator Vector<Color>() const {
 		return static_cast<PackedArrayRef<Color> *>(_data.packed_array)->array;
 	} else {
 		return _convert_array_from_variant<Vector<Color>>(*this);
+	}
+}
+
+Variant::operator Vector<Dictionary>() const {
+	if (type == PACKED_COLOR_ARRAY) {
+		return static_cast<PackedArrayRef<Dictionary> *>(_data.packed_array)->array;
+	} else {
+		return _convert_array_from_variant<Vector<Dictionary>>(*this);
 	}
 }
 
@@ -2716,6 +2763,11 @@ Variant::Variant(const Vector<Color> &p_color_array) {
 	_data.packed_array = PackedArrayRef<Color>::create(p_color_array);
 }
 
+Variant::Variant(const Vector<Dictionary> &p_dict_array) {
+	type = PACKED_DICT_ARRAY;
+	_data.packed_array = PackedArrayRef<Dictionary>::create(p_dict_array);
+}
+
 Variant::Variant(const Vector<Face3> &p_face_array) {
 	Vector<Vector3> vertices;
 	int face_count = p_face_array.size();
@@ -2912,6 +2964,9 @@ void Variant::operator=(const Variant &p_variant) {
 		} break;
 		case PACKED_COLOR_ARRAY: {
 			_data.packed_array = PackedArrayRef<Color>::reference_from(_data.packed_array, p_variant._data.packed_array);
+		} break;
+		case PACKED_DICT_ARRAY: {
+			_data.packed_array = PackedArrayRef<Dictionary>::reference_from(_data.packed_array, p_variant._data.packed_array);
 		} break;
 		default: {
 		}
@@ -3234,6 +3289,20 @@ uint32_t Variant::recursive_hash(int recursion_count) const {
 
 			return hash;
 		} break;
+		case PACKED_DICT_ARRAY: {
+			uint32_t hash = HASH_MURMUR3_SEED;
+			const Vector<Dictionary> &arr = PackedArrayRef<Dictionary>::get_array(_data.packed_array);
+			int len = arr.size();
+
+			if (likely(len)) {
+                for (const auto& dict : arr) {
+                    hash = hash_murmur3_one_32(dict.recursive_hash(recursion_count), hash);
+                }
+				hash = hash_fmix32(hash);
+			}
+
+			return hash;
+		} break;
 		default: {
 		}
 	}
@@ -3527,7 +3596,8 @@ bool Variant::identity_compare(const Variant &p_variant) const {
 		case PACKED_STRING_ARRAY:
 		case PACKED_VECTOR2_ARRAY:
 		case PACKED_VECTOR3_ARRAY:
-		case PACKED_COLOR_ARRAY: {
+		case PACKED_COLOR_ARRAY: 
+        case PACKED_DICT_ARRAY: {
 			return _data.packed_array == p_variant._data.packed_array;
 		} break;
 

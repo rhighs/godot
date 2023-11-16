@@ -225,6 +225,7 @@ MAKE_TEMPLATE_TYPE_INFO(Vector, RID, Variant::ARRAY)
 MAKE_TEMPLATE_TYPE_INFO(Vector, Plane, Variant::ARRAY)
 MAKE_TEMPLATE_TYPE_INFO(Vector, Face3, Variant::PACKED_VECTOR3_ARRAY)
 MAKE_TEMPLATE_TYPE_INFO(Vector, StringName, Variant::PACKED_STRING_ARRAY)
+MAKE_TEMPLATE_TYPE_INFO(Vector, Dictionary, Variant::PACKED_DICT_ARRAY)
 
 template <typename T>
 struct GetTypeInfo<T *, typename EnableIf<TypeInherits<Object, T>::value>::type> {
